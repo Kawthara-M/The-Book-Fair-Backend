@@ -20,20 +20,10 @@ const FairSchema = new Schema(
       type: String,
       required: true,
     },
-    category: {
-      type: String,
-      required: true,
-    },
-    activeDates: [
-      {
-        type: Date,
-        required: true,
-      },
-    ],
     status: {
       type: String,
       default: "upcoming",
-      enum: ["upcoming", "ongoing", "finished", "canceled"],
+      enum: ["upcoming", "openForBooking", "ongoing", "finished", "canceled"],
     },
     exhibitorRoles: [
       {
@@ -67,17 +57,13 @@ const FairSchema = new Schema(
         },
         availability: {
           type: Number,
-        }, // why do we need this?
-        availabilityPerDay: {
-          type: Object,
-          default: {},
-        },
+        }, 
         startDate: {
-          type: Date,
+          type: String,
           required: true,
         },
         endDate: {
-          type: Date,
+          type: String,
           required: true,
         },
       },

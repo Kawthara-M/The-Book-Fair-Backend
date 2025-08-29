@@ -1,5 +1,6 @@
 const User = require("../models/User")
 const Exhibitor = require("../models/Exhibitor")
+const Ticket = require("../models/Ticket")
 const middleware = require("../middleware/index.js")
 const validatePassword = require("../validators/passwordValidator.js")
 
@@ -78,7 +79,6 @@ const SignUp = async (req, res) => {
 const SignIn = async (req, res) => {
   try {
     const { email, password } = req.body
-
     const user = await User.findOne({ email })
 
     if (user) {
@@ -108,15 +108,17 @@ const SignIn = async (req, res) => {
   }
 }
 
-const deletAccount = async (req, res) => {
+// tested!
+const deleteAccount = async (req, res) => {
   try {
-    const userId = req.params.id
+    const userId = res.locals.payload.id
 
-    if (res.locals.payload.id !== userId) {
-      return res.status(403).send({ msg: "Unauthorized request" })
+    const tickets = await Ticket.find({ user: userId })
+
+    for (const ticket of tickets) {
+      await Ticket.findByIdAndDelete(ticket._id)
     }
 
-    // await Order.deleteMany({ customer: userId }) // make this one delete tickets for Attendee, another for fairs when admin is deleted? and Booking when exhibitor is deleted
     await User.findByIdAndDelete(userId)
 
     res.status(200).send({ msg: "Account successfully deleted" })
@@ -126,39 +128,46 @@ const deletAccount = async (req, res) => {
   }
 }
 
-
 // Tested!
 const UpdatePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body
     let user = await User.findById(res.locals.payload.id)
-    let matched = await middleware.comparePassword(
-      oldPassword,
-      user.passwordDigest
-    )
-    if (matched) {
-      if (!validatePassword(newPassword)) {
-        return res.status(400).json({
-          error:
-            "Weak Password! Have a mix of capital and lower letters, digits, and unique symbols!",
+
+    if (user) {
+      let matched = await middleware.comparePassword(
+        oldPassword,
+        user.passwordDigest
+      )
+      if (matched) {
+        if (!validatePassword(newPassword)) {
+          return res.status(400).json({
+            error:
+              "Weak Password! Have a mix of capital and lower letters, digits, and unique symbols!",
+          })
+        }
+
+        let passwordDigest = await middleware.hashPassword(newPassword)
+        user = await User.findByIdAndUpdate(res.locals.payload.id, {
+          passwordDigest,
         })
+
+        let payload = {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        }
+        return res
+          .status(200)
+          .send({ status: "Password Updated!", user: payload })
+      } else {
+        res
+          .status(401)
+          .send({ status: "Error", msg: "Passwords did not match!" })
       }
-      let passwordDigest = await middleware.hashPassword(newPassword)
-      user = await User.findByIdAndUpdate(res.locals.payload.id, {
-        passwordDigest,
-      })
-      let payload = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      }
-      return res
-        .status(200)
-        .send({ status: "Password Updated!", user: payload })
+    } else {
+      return res.status(404).send("User not found!")
     }
-    res
-      .status(401)
-      .send({ status: "Error", msg: "Old Password did not match!" })
   } catch (error) {
     console.log(error)
     res.status(401).send({
@@ -168,6 +177,7 @@ const UpdatePassword = async (req, res) => {
   }
 }
 
+// tested
 const CheckSession = async (req, res) => {
   const { payload } = res.locals
   res.status(200).send(payload)
@@ -177,6 +187,6 @@ module.exports = {
   SignUp,
   SignIn,
   CheckSession,
-  deletAccount,
+  deleteAccount,
   UpdatePassword,
 }

@@ -63,7 +63,15 @@ const isAttendee = (req, res, next) => {
   if (user && user.role === "Attendee") {
     return next()
   } else {
-    return res.status(403).json({ error: "Access denied: Admins only." })
+    return res.status(403).json({ error: "Access denied: Attendees only." })
+  }
+}
+const isExhibitor = (req, res, next) => {
+  const user = res.locals.payload
+  if (user && user.role === "Exhibitor") {
+    return next()
+  } else {
+    return res.status(403).json({ error: "Access denied: Exhibitors only." })
   }
 }
 
@@ -74,5 +82,6 @@ module.exports = {
   stripToken,
   verifyToken,
   isAdmin,
-  isAttendee
+  isAttendee,
+  isExhibitor
 }

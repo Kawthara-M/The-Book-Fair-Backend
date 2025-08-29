@@ -1,7 +1,7 @@
 const User = require("../models/User")
 const Exhibitor = require("../models/Exhibitor")
 
-// should be tested again to assure it works with portfolio
+// tested
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(res.locals.payload.id)
@@ -14,19 +14,17 @@ const getUserProfile = async (req, res) => {
 
     res.status(200).json({
       user,
-      exhibitor: exhibitor || null,
+      exhibitor: exhibitor || "",
     })
-
-    res.status(200).json(user)
   } catch (error) {
     throw error
   }
 }
 
-// not tested, should update it to cater for file
+// tested
 const updateUserProfile = async (req, res) => {
   try {
-    const { name, email, phone, job, category } = req.body
+    const { name, email, phone, job, cr } = req.body
     const userId = res.locals.payload.id
 
     const portfolioUrl = req.file
@@ -42,7 +40,7 @@ const updateUserProfile = async (req, res) => {
       new: true,
     })
     if (!updatedUser) {
-      return res.status(404).send("User not found")
+      return res.status(404).send("User not found!")
     }
 
     const exhibitor = await Exhibitor.findOne({ user: userId })
@@ -52,7 +50,7 @@ const updateUserProfile = async (req, res) => {
     if (exhibitor) {
       const exhibitorUpdateData = {}
       if (job) exhibitorUpdateData.job = job
-      if (category) exhibitorUpdateData.category = category
+      if (cr) exhibitorUpdateData.cr = cr
       if (portfolioUrl) exhibitorUpdateData.portfolio = portfolioUrl
 
       if (Object.keys(exhibitorUpdateData).length > 0) {
@@ -61,6 +59,11 @@ const updateUserProfile = async (req, res) => {
           exhibitorUpdateData,
           { new: true }
         )
+        if (updatedExhibitor) {
+          updatedExhibitor.save()
+        } else {
+          return res.status(500).json({ error: "Failed to update exhibitor." })
+        }
       } else {
         updatedExhibitor = exhibitor
       }

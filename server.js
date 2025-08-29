@@ -15,7 +15,6 @@ const port = process.env.PORT ? process.env.PORT : 3000
 
 // Require MiddleWares
 app.use(cors())
-app.use(express.static(path.join(__dirname, 'public')))
 const morgan = require('morgan')
 
 // use MiddleWares
@@ -33,11 +32,15 @@ app.get('/', (req, res) => {
 const authRouter = require('./routes/authRouter')
 const userRouter = require('./routes/userRouter')
 const fairRouter = require('./routes/fairRouter')
+const ticketRouter = require('./routes/ticketRouter')
+const bookingRouter = require('./routes/bookingRouter')
 
 // use Routers
 app.use('/auth', authRouter)
 app.use('/profile', userRouter)
 app.use('/fairs', fairRouter)
+app.use('/tickets', ticketRouter)
+app.use('/bookings', bookingRouter)
 
 // Listener
 app.listen(port, () => {

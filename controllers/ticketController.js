@@ -1,6 +1,7 @@
 const Ticket = require("../models/Ticket")
 const Fair = require("../models/Fair")
 
+// tested!, this is to simulate attendee buying ticket
 const createTicket = async (req, res) => {
   try {
     const fair = await Fair.findById(req.params.fairId)
@@ -18,18 +19,22 @@ const createTicket = async (req, res) => {
         .json({ error: "Invalid ticket type for this fair" })
     }
 
-    if (fair.tickets[ticketIndex].availabilityPerDay <= 0) {
+    if (fair.tickets[ticketIndex].availability <= 0) {
       return res.status(400).json({ error: "No tickets available!" })
+    }
+    let statusBasedOnFee = "active"
+    if (fair.tickets[ticketIndex].fee > 0) {
+      statusBasedOnFee = "unpaid"
     }
 
     const newTicket = await Ticket.create({
       fair: fair._id,
       user: res.locals.payload.id,
       type,
-      status: "active",
+      status: statusBasedOnFee,
     })
 
-    fair.tickets[ticketIndex].availabilityPerDay -= 1
+    fair.tickets[ticketIndex].availability -= 1
     await fair.save()
 
     res.status(201).json(newTicket)
@@ -37,45 +42,152 @@ const createTicket = async (req, res) => {
     throw error
   }
 }
+
+// how would they pay the difference?
 const updateTicket = async (req, res) => {
   try {
-    const { id } = req.params
-    const { status } = req.body
+    const { ticketId } = req.params
+    const { status, newType } = req.body
 
-    const updatedTicket = await Ticket.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    )
+    let ticket = await Ticket.findById(ticketId).populate("fair")
+    if (ticket && ticket.status == "active") {
+      const fair = ticket.fair
+      let fairTickets = fair.tickets
 
-    if (!updatedTicket) {
-      return res.status(404).json({ error: "Ticket not found" })
+      let typeIndex = fairTickets.findIndex(
+        (fairTicket) => fairTicket.type === newType
+      )
+
+      if (typeIndex >= 0) {
+        let updateAvailability = true
+        if (fairTickets[typeIndex].type == ticket.type) {
+          updateAvailability = false
+        }
+        const ticketStartDate = new Date(fairTickets[typeIndex].startDate)
+        const now = new Date()
+
+        if (fairTickets[typeIndex].availability > 0 && ticketStartDate > now) {
+          const updatedTicket = await Ticket.findByIdAndUpdate(
+            ticketId,
+            { status: "active", type: newType },
+            { new: true }
+          )
+          if (!updatedTicket) {
+            return res.status(404).json({ error: "Ticket not found" })
+          }
+          if (updateAvailability) {
+            fairTickets[typeIndex].availability -= 1
+            await fair.save()
+          }
+
+          return res.status(200).json(updatedTicket)
+        } else {
+          console.log(fairTickets[typeIndex].startDate < new Date().toString())
+          return res
+            .status(400)
+            .json({ error: "Ticket type unavailable or not started yet" })
+        }
+      } else {
+        return res
+          .status(400)
+          .json({ error: "Invalid ticket type for this fair" })
+      }
     }
 
-    res.status(200).json(updatedTicket)
+    // if (fair.tickets[ticketIndex].availability <= 0) {
+    //   return res.status(400).json({ error: "No tickets available!" })
+    // }
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: "Failed to update ticket!" })
   }
 }
 
-const deleteTicket = async (req, res) => {
+// tested!
+const updateStatus = async (req, res) => {
   try {
-    //until we figure out if deleting is possible or not
+    const { ticketId } = req.params
+    const ticket = await Ticket.findById(ticketId)
+    const stages = ["unpaid", "active", "expired"]
+
+    if (ticket) {
+      if (ticket.user != res.locals.payload.id) {
+        res.status(403).send({
+          msg: "You are not authorized to update status of a ticket you do not own!",
+        })
+      }
+
+      const index = stages.findIndex((stage) => stage === ticket.status)
+      if (index >= 0 && index < stages.length - 1) {
+        ticket.status = stages[index + 1]
+        await ticket.save()
+        return res
+          .status(200)
+          .json({ msg: "Ticket status updated successfully.", ticket })
+      } else {
+        res.status(403).send({
+          msg: "You are not authorized to update a ticket in this status!",
+        })
+      }
+    } else {
+      return res.status(404).json({ error: "Ticket not found!" })
+    }
   } catch (error) {
     console.error(error)
-    res.status(500).send("Failed to delete Ticket!")
+    return res.status(500).json({ error: "Failed to update ticket status." })
   }
 }
+
+// tested!
+const deleteTicket = async (req, res) => {
+  try {
+    const { ticketId } = req.params
+    let ticket = await Ticket.findById(ticketId).populate("fair")
+
+    if (ticket) {
+      const fair = ticket.fair
+
+      const ticketToUpdate = fair.tickets.find((t) => t.type === ticket.type)
+      if (ticketToUpdate) {
+        ticketToUpdate.availability += 1
+        await fair.save()
+      }
+
+      await Ticket.findByIdAndDelete(ticketId)
+
+      return res.status(200).json({ message: "Ticket deleted successfully." })
+    } else {
+      return res.status(404).json({ message: "Ticket not found." })
+    }
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: "Failed to delete fair." })
+  }
+}
+
+//tested!
 const getTicketsByUser = async (req, res) => {
   try {
     const userId = res.locals.payload.id
     const tickets = await Ticket.find({ user: userId }).populate("fair")
 
-    if (tickets.length > 0) {
+    if (tickets) {
       res.send(tickets)
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).send("Failed to get Tickets!")
+  }
+}
+
+const getTicketsByFair = async (req, res) => {
+  try {
+    const fair = await Fair.findById(req.params.fairId)
+
+    if (fair.tickets.length > 0) {
+      res.send(fair.tickets)
     } else {
-      res.status(404).send("No tickets found for this user!")
+      res.status(404).send("No tickets found for this fair!")
     }
   } catch (error) {
     console.error(error)
@@ -88,4 +200,6 @@ module.exports = {
   updateTicket,
   deleteTicket,
   getTicketsByUser,
+  getTicketsByFair,
+  updateStatus,
 }

@@ -1,52 +1,59 @@
 const router = require("express").Router()
-const ticketCtrl = require("../controllers/ticketController")
+const bookingCtrl = require("../controllers/bookingController")
 const middleware = require("../middleware")
 
 router.post(
   "/:fairId",
   middleware.stripToken,
   middleware.verifyToken,
-  middleware.isAttendee,
-  ticketCtrl.createTicket
+  middleware.isExhibitor,
+  bookingCtrl.createBooking
 )
+// get all bookings
 router.get(
   "/",
   middleware.stripToken,
   middleware.verifyToken,
-  middleware.isAttendee,
-  ticketCtrl.getTicketsByUser
+  bookingCtrl.getBookings
 )
 
 router.get(
   "/:fairId",
   middleware.stripToken,
   middleware.verifyToken,
-  ticketCtrl.getTicketsByFair
+  middleware.isAdmin,
+  bookingCtrl.getBookingByFair
 )
-
-// 
-router.put(
-  "/:ticketId",
+router.get(
+  "/exhibitor-bookings/:fairId",
   middleware.stripToken,
   middleware.verifyToken,
-  middleware.isAttendee,
-  ticketCtrl.updateTicket
-)
-router.put(
-  "/update-status/:ticketId",
-  middleware.stripToken,
-  middleware.verifyToken,
-  middleware.isAttendee,
-  ticketCtrl.updateStatus
+  middleware.isExhibitor,
+  bookingCtrl.getBookingByUser
 )
 
-// should user be able to delete the ticket? they would need to refund them,
+router.put(
+  "/:bookingId",
+  middleware.stripToken,
+  middleware.verifyToken,
+  middleware.isExhibitor,
+  bookingCtrl.updateBooking
+)
+
+router.put(
+  "/update-status/:bookingId",
+  middleware.stripToken,
+  middleware.verifyToken,
+  middleware.isAdmin,
+  bookingCtrl.updateStatus
+)
+
 router.delete(
-  "/:ticketId",
+  "/:bookingId",
   middleware.stripToken,
   middleware.verifyToken,
   middleware.isAttendee,
-  ticketCtrl.deleteTicket
+  bookingCtrl.deleteBooking
 )
 
 module.exports = router

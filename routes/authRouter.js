@@ -14,10 +14,11 @@ router.put(
 )
 
 router.delete(
-  "/:id",
+  "/",
   middleware.stripToken,
   middleware.verifyToken,
-  authCtrl.deletAccount
+  middleware.isAttendee,
+  authCtrl.deleteAccount
 )
 
 router.get(

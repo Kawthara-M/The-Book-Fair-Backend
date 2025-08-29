@@ -20,7 +20,7 @@ const TicketSchema = new Schema(
     status: {
       type: String,
       default: "active",
-      enum: ["active", "expired"],
+      enum: ["unpaid","active", "expired"],
     }
   },
   {
