@@ -180,6 +180,7 @@ const getTicketsByUser = async (req, res) => {
   }
 }
 
+// why do we even need this? tickets info can be extracted from fair
 const getTicketsByFair = async (req, res) => {
   try {
     const fair = await Fair.findById(req.params.fairId)

@@ -39,11 +39,12 @@ const verifyToken = (req, res, next) => {
   try {
     let payload = jwt.verify(token, APP_SECRET)
     if (payload) {
+            console.log("Token verified, payload:", payload)
       res.locals.payload = payload
       return next()
     }
 
-    res.status(401).send({ status: "Error", msg: "Unauthorized" })
+   res.status(401).send({ status: "Error", msg: "Unauthorized" })
   } catch (error) {
     console.log(error)
     res.status(401).send({ status: "Error", msg: "Verify Token Error!" })
@@ -67,6 +68,7 @@ const isAttendee = (req, res, next) => {
   }
 }
 const isExhibitor = (req, res, next) => {
+  console.log("entered here")
   const user = res.locals.payload
   if (user && user.role === "Exhibitor") {
     return next()

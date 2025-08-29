@@ -3,7 +3,6 @@ const router = express.Router()
 const fairController = require("../controllers/fairController")
 const middleware = require("../middleware")
 
-// would we need these if it's only the book fair?
 router.get("/", fairController.getFairs)
 router.get("/:id", fairController.getFairById)
 

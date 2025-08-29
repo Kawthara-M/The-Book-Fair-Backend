@@ -10,12 +10,8 @@ const BookingSchema = new Schema(
     },
     stands: [
       {
-        type: {
-          type: String,
-        },
-        number: {
-          type: number,
-        },
+        type: Schema.Types.ObjectId,
+        ref: "Stand",
       },
     ],
 
@@ -27,15 +23,10 @@ const BookingSchema = new Schema(
     exhibitorRole: {
       type: String,
     },
-    hall: {
-      type: Schema.Types.ObjectId,
-      ref: "Hall",
-      required: true,
-    },
     status: {
       type: String,
-      default: "pendingg",
-      enum: ["pending", "accepted", "rejected", "over"],
+      default: "pending",
+      enum: ["pending", "accepted", "paid", "rejected", "over"],
     },
   },
   {

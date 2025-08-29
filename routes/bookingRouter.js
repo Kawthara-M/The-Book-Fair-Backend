@@ -9,11 +9,19 @@ router.post(
   middleware.isExhibitor,
   bookingCtrl.createBooking
 )
-// get all bookings
+// get all bookings, but admin would be able to see all bookings even if they not manager, not right
+router.get(
+  "/exhibitor-bookings",
+  middleware.stripToken,
+  middleware.verifyToken,
+  middleware.isExhibitor,
+  bookingCtrl.getBookingsByUser
+)
 router.get(
   "/",
   middleware.stripToken,
   middleware.verifyToken,
+  middleware.isAdmin,
   bookingCtrl.getBookings
 )
 
@@ -22,14 +30,7 @@ router.get(
   middleware.stripToken,
   middleware.verifyToken,
   middleware.isAdmin,
-  bookingCtrl.getBookingByFair
-)
-router.get(
-  "/exhibitor-bookings/:fairId",
-  middleware.stripToken,
-  middleware.verifyToken,
-  middleware.isExhibitor,
-  bookingCtrl.getBookingByUser
+  bookingCtrl.getBookingsByFair
 )
 
 router.put(
@@ -52,7 +53,7 @@ router.delete(
   "/:bookingId",
   middleware.stripToken,
   middleware.verifyToken,
-  middleware.isAttendee,
+  middleware.isExhibitor,
   bookingCtrl.deleteBooking
 )
 
