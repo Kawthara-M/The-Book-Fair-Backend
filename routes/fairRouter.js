@@ -23,7 +23,6 @@ router.post(
   middleware.stripToken,
   middleware.verifyToken,
   middleware.isAdmin,
-  upload.single("image"),
   fairController.createFair
 )
 
@@ -49,7 +48,7 @@ router.put(
   fairController.updateStatus
 )
 
-// to delete upcoming fairs
+
 router.delete(
   "/:id",
   middleware.stripToken,

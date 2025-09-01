@@ -75,7 +75,6 @@ const createFair = async (req, res) => {
   return res.status(400).json({ error: "Halls and exhibitorRoles must be arrays" });
 }
 
-        const image = req.file ? `/uploads/portfolio/${req.file.filename}` : null;
 
     if (!isTicketDateRangeValid(startDate, endDate, tickets)) {
       return res.status(400).json({
