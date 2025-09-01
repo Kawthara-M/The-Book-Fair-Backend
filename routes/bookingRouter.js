@@ -17,13 +17,6 @@ router.get(
   middleware.isExhibitor,
   bookingCtrl.getBookingsByUser
 )
-router.get(
-  "/",
-  middleware.stripToken,
-  middleware.verifyToken,
-  middleware.isAdmin,
-  bookingCtrl.getBookings
-)
 
 router.get(
   "/:fairId",
@@ -31,6 +24,12 @@ router.get(
   middleware.verifyToken,
   middleware.isAdmin,
   bookingCtrl.getBookingsByFair
+)
+router.get(
+  "/:bookingId/stands",
+  middleware.stripToken,
+  middleware.verifyToken,
+  bookingCtrl.getBookingStands
 )
 
 router.put(

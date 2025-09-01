@@ -17,6 +17,7 @@ router.get(
   ticketCtrl.getTicketsByUser
 )
 
+// might be deleted
 router.get(
   "/:fairId",
   middleware.stripToken,
@@ -24,7 +25,7 @@ router.get(
   ticketCtrl.getTicketsByFair
 )
 
-// 
+
 router.put(
   "/:ticketId",
   middleware.stripToken,

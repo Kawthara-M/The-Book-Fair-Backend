@@ -4,7 +4,6 @@ const Exhibitor = require("../models/Exhibitor")
 const Stand = require("../models/Stand")
 const Booking = require("../models/Booking")
 
-// tested!
 const createBooking = async (req, res) => {
   try {
     const fair = await Fair.findById(req.params.fairId)
@@ -19,7 +18,6 @@ const createBooking = async (req, res) => {
       return res.status(404).json({ error: "Exhibitor not found!" })
     }
     const exhibitorId = exhibitor._id
-    const exhibitorName = exhibitor.user.name
 
     const roleIndex = fair.exhibitorRoles.findIndex(
       (role) => role.name === exhibitorRole
@@ -41,7 +39,6 @@ const createBooking = async (req, res) => {
       return res.status(404).send("No Halls found for this fair!")
     }
 
-    const errors = []
     const createdStands = []
 
     for (const standRequest of stands) {
@@ -61,11 +58,10 @@ const createBooking = async (req, res) => {
         ) {
           const standDoc = await Stand.create({
             hall: hall._id,
-            name: `${exhibitorName} - ${hall.name} - ${requestedType}`,
+            name: `${hall.name} - ${requestedType}`,
             exhibitor: exhibitorId,
             type: requestedType,
           })
-          console.log("error is here?")
 
           createdStands.push(standDoc._id)
 
@@ -113,20 +109,6 @@ const createBooking = async (req, res) => {
   }
 }
 
-// I think this one should be deleted
-const getBookings = async (req, res) => {
-  try {
-    // const userId = res.locals.payload.id
-    // const tickets = await Ticket.find({ user: userId }).populate("fair")
-    // if (tickets) {
-    //   res.send(tickets)
-    // }
-  } catch (error) {
-    console.error(error)
-    res.status(500).send("Failed to get Bookings!")
-  }
-}
-
 //tested
 const getBookingsByFair = async (req, res) => {
   try {
@@ -137,7 +119,10 @@ const getBookingsByFair = async (req, res) => {
     })
 
     if (fair) {
-      const bookings = await Booking.find({ fair: fair }).populate('exhibitor')
+      const bookings = await Booking.find({ fair: fair }).populate({
+        path: "exhibitor",
+        populate: { path: "user" }, 
+      }).populate("stands")
 
       if (bookings) {
         res.send(bookings)
@@ -159,9 +144,21 @@ const getBookingsByFair = async (req, res) => {
 const getBookingsByUser = async (req, res) => {
   try {
     const userId = res.locals.payload.id
-    const exhibitor = await Exhibitor.findOne({user:userId})
+    const exhibitor = await Exhibitor.findOne({ user: userId })
     const exhibitorId = exhibitor._id
     const bookings = await Booking.find({ exhibitor: exhibitorId })
+      .populate({
+        path: "stands",
+        populate: {
+          path: "hall",
+        },
+      })
+      .populate({
+        path: "fair",
+        populate: {
+          path: "mainManager",
+        },
+      })
 
     if (bookings) {
       res.send(bookings)
@@ -179,7 +176,11 @@ const updateBooking = async (req, res) => {
   try {
     const userId = res.locals.payload.id
     const { bookingId } = req.params
-    const { stands: newStands } = req.body
+    const { requestedType } = req.body
+
+    if (!requestedType) {
+      return res.status(400).json({ error: "Must provide requestedType." })
+    }
 
     const exhibitor = await Exhibitor.findOne({ user: userId }).populate("user")
     if (!exhibitor) {
@@ -199,7 +200,7 @@ const updateBooking = async (req, res) => {
         .json({ error: "Unauthorized to update this booking." })
     }
 
-    if (booking.status != "pending") {
+    if (booking.status !== "pending") {
       return res
         .status(403)
         .json({ error: "Unauthorized to update a booking past pending stage" })
@@ -228,10 +229,8 @@ const updateBooking = async (req, res) => {
         .json({ error: "Exhibitor role not valid for this fair!" })
     }
 
-    if (newStands.length > role.standsLimit) {
-      return res
-        .status(400)
-        .json({ error: "Exceeds stand limit for this role!" })
+    if (role.standsLimit < 1) {
+      return res.status(400).json({ error: "Role does not allow any stands." })
     }
 
     for (const stand of booking.stands) {
@@ -245,43 +244,32 @@ const updateBooking = async (req, res) => {
     }
 
     const createdStands = []
+    let standCreated = false
 
-    for (const request of newStands) {
-      const { requestedType, requestedCount } = request
-      let count = parseInt(requestedCount) || 0
-
-      for (const hall of halls) {
-        const idx = hall.stands.findIndex(
-          (s) => s.type === requestedType && s.availability > 0
-        )
-
-        while (idx !== -1 && hall.stands[idx].availability > 0 && count > 0) {
-          const stand = await Stand.create({
-            hall: hall._id,
-            name: `${exhibitor.user.name} - ${hall.name} - ${requestedType}`,
-            exhibitor: exhibitor._id,
-            type: requestedType,
-          })
-
-          createdStands.push(stand._id)
-          hall.stands[idx].availability -= 1
-          count--
-
-          if (hall.stands[idx].availability === 0) break
-        }
-
-        if (count === 0) break
-      }
-
-      if (count > 0) {
-        return res.status(400).json({
-          error: `Not enough availability for '${requestedType}' stands.`,
+    for (const hall of halls) {
+      const idx = hall.stands.findIndex(
+        (s) => s.type === requestedType && s.availability > 0
+      )
+      if (idx !== -1 && hall.stands[idx].availability > 0) {
+        const stand = await Stand.create({
+          hall: hall._id,
+          name: `${hall.name} - ${requestedType}`,
+          exhibitor: exhibitor._id,
+          type: requestedType,
         })
+
+        createdStands.push(stand._id)
+        hall.stands[idx].availability -= 1
+        await hall.save()
+        standCreated = true
+        break
       }
     }
 
-    for (const hall of halls) {
-      await hall.save()
+    if (!standCreated) {
+      return res.status(400).json({
+        error: `Not enough availability for '${requestedType}' stands.`,
+      })
     }
 
     booking.stands = createdStands
@@ -402,12 +390,27 @@ const deleteBooking = async (req, res) => {
   }
 }
 
+getBookingStands = async (req, res) => {
+  try {
+    const stands = await Booking.findById(req.params.id).populate({
+      path: "stands", // populate stands array
+      populate: {
+        path: "hall", // for each stand, populate hall
+        model: "Hall", // optional if not inferred
+      },
+    })
+    if (stands) {
+      return res.status(200).json({ stands })
+    }
+  } catch (error) {}
+}
+
 module.exports = {
   createBooking,
-  getBookings,
   getBookingsByFair,
   getBookingsByUser,
   updateBooking,
   updateStatus,
   deleteBooking,
+  getBookingStands,
 }

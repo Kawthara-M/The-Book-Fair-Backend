@@ -263,6 +263,17 @@ const deleteFair = async (req, res) => {
   }
 }
 
+const getHallsForFair = async (req, res) => {
+  try {
+    const { id } = req.params
+    const halls = await Hall.find({ fair: id })
+    res.status(200).json(halls)
+  } catch (error) {
+    console.error("Failed to fetch halls for fair", error)
+    res.status(500).json({ error: "Could not fetch halls" })
+  }
+}
+
 module.exports = {
   getFairs,
   getFairById,
@@ -271,4 +282,5 @@ module.exports = {
   deleteFair,
   cancelFair,
   updateStatus,
+  getHallsForFair,
 }

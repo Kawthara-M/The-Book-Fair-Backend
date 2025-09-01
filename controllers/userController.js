@@ -27,6 +27,13 @@ const updateUserProfile = async (req, res) => {
     const { name, email, phone, job, cr } = req.body
     const userId = res.locals.payload.id
 
+    if (email) {
+      const existingUser = await User.findOne({ email: email.toLowerCase() })
+      if (existingUser && existingUser._id.toString() !== userId) {
+        return res.status(400).json({ error: "Email is already taken." })
+      }
+    }
+
     const portfolioUrl = req.file
       ? `/uploads/portfolio/${req.file.filename}`
       : null

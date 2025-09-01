@@ -39,7 +39,6 @@ const verifyToken = (req, res, next) => {
   try {
     let payload = jwt.verify(token, APP_SECRET)
     if (payload) {
-            console.log("Token verified, payload:", payload)
       res.locals.payload = payload
       return next()
     }
@@ -68,7 +67,6 @@ const isAttendee = (req, res, next) => {
   }
 }
 const isExhibitor = (req, res, next) => {
-  console.log("entered here")
   const user = res.locals.payload
   if (user && user.role === "Exhibitor") {
     return next()

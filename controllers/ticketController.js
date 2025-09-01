@@ -43,14 +43,13 @@ const createTicket = async (req, res) => {
   }
 }
 
-// how would they pay the difference?
 const updateTicket = async (req, res) => {
   try {
     const { ticketId } = req.params
-    const { status, newType } = req.body
+    const { newType } = req.body
 
     let ticket = await Ticket.findById(ticketId).populate("fair")
-    if (ticket && ticket.status == "active") {
+    if (ticket && ticket.status == "unpaid") {
       const fair = ticket.fair
       let fairTickets = fair.tickets
 
@@ -69,7 +68,7 @@ const updateTicket = async (req, res) => {
         if (fairTickets[typeIndex].availability > 0 && ticketStartDate > now) {
           const updatedTicket = await Ticket.findByIdAndUpdate(
             ticketId,
-            { status: "active", type: newType },
+            { status: "unpaid", type: newType },
             { new: true }
           )
           if (!updatedTicket) {
@@ -82,7 +81,6 @@ const updateTicket = async (req, res) => {
 
           return res.status(200).json(updatedTicket)
         } else {
-          console.log(fairTickets[typeIndex].startDate < new Date().toString())
           return res
             .status(400)
             .json({ error: "Ticket type unavailable or not started yet" })
@@ -92,6 +90,10 @@ const updateTicket = async (req, res) => {
           .status(400)
           .json({ error: "Invalid ticket type for this fair" })
       }
+    } else {
+      res.status(403).send({
+        msg: "You are not authorized to update a ticket that has been paid!",
+      })
     }
 
     // if (fair.tickets[ticketIndex].availability <= 0) {

@@ -4,6 +4,12 @@ const fairController = require("../controllers/fairController")
 const middleware = require("../middleware")
 
 router.get("/", fairController.getFairs)
+router.get(
+  "/:id/halls",
+  middleware.stripToken,
+  middleware.verifyToken,
+  fairController.getHallsForFair
+)
 router.get("/:id", fairController.getFairById)
 
 // only admin can create, update, and delete fairs
@@ -45,5 +51,7 @@ router.delete(
   middleware.isAdmin,
   fairController.deleteFair
 )
+
+
 
 module.exports = router

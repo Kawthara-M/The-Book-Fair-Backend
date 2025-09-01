@@ -4,7 +4,6 @@ const Ticket = require("../models/Ticket")
 const middleware = require("../middleware/index.js")
 const validatePassword = require("../validators/passwordValidator.js")
 
-// Tested!
 const SignUp = async (req, res) => {
   try {
     const {
@@ -75,7 +74,6 @@ const SignUp = async (req, res) => {
   }
 }
 
-// Tested!
 const SignIn = async (req, res) => {
   try {
     const { email, password } = req.body
@@ -108,7 +106,6 @@ const SignIn = async (req, res) => {
   }
 }
 
-// tested!
 const deleteAccount = async (req, res) => {
   try {
     const userId = res.locals.payload.id
@@ -128,7 +125,6 @@ const deleteAccount = async (req, res) => {
   }
 }
 
-// Tested!
 const UpdatePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body
@@ -177,7 +173,6 @@ const UpdatePassword = async (req, res) => {
   }
 }
 
-// tested
 const CheckSession = async (req, res) => {
   const { payload } = res.locals
   res.status(200).send(payload)
