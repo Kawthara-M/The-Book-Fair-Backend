@@ -57,7 +57,7 @@ const FairSchema = new Schema(
         },
         availability: {
           type: Number,
-        }, 
+        },
         startDate: {
           type: String,
           required: true,
@@ -68,6 +68,9 @@ const FairSchema = new Schema(
         },
       },
     ],
+    image: {
+      type: String,
+    },
   },
   {
     timestamps: true,

@@ -59,6 +59,7 @@ const calculateStandsLimit = (roles) => {
 // tested
 const createFair = async (req, res) => {
   try {
+
     const {
       name,
       address,
@@ -70,7 +71,12 @@ const createFair = async (req, res) => {
       startDate,
       endDate,
     } = req.body
-    // ensuring that the tickets validaty dates is within fair dates
+    if (!Array.isArray(halls) || !Array.isArray(exhibitorRoles)) {
+  return res.status(400).json({ error: "Halls and exhibitorRoles must be arrays" });
+}
+
+        const image = req.file ? `/uploads/portfolio/${req.file.filename}` : null;
+
     if (!isTicketDateRangeValid(startDate, endDate, tickets)) {
       return res.status(400).json({
         error:
@@ -87,8 +93,8 @@ const createFair = async (req, res) => {
         .status(409)
         .json({ error: "A fair with this name already exists!" })
     } else {
-      // ensuring that the stands set for each role doesn't exceed the total available stands of the fair
-      if (calculateHallsStands(halls) > calculateStandsLimit(exhibitorRoles)) {
+
+      if (calculateHallsStands(halls) < calculateStandsLimit(exhibitorRoles)) {
         fair = await Fair.create({
           name,
           address,
@@ -111,7 +117,7 @@ const createFair = async (req, res) => {
 
         return res.status(201).json(fair)
       } else {
-        res.send(
+      return  res.send(
           "Stands limit shouldn't exceed the total available stands for this fair!"
         )
       }
