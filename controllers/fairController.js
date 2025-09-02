@@ -59,7 +59,6 @@ const calculateStandsLimit = (roles) => {
 // tested
 const createFair = async (req, res) => {
   try {
-
     const {
       name,
       address,
@@ -72,9 +71,10 @@ const createFair = async (req, res) => {
       endDate,
     } = req.body
     if (!Array.isArray(halls) || !Array.isArray(exhibitorRoles)) {
-  return res.status(400).json({ error: "Halls and exhibitorRoles must be arrays" });
-}
-
+      return res
+        .status(400)
+        .json({ error: "Halls and exhibitorRoles must be arrays" })
+    }
 
     if (!isTicketDateRangeValid(startDate, endDate, tickets)) {
       return res.status(400).json({
@@ -92,8 +92,7 @@ const createFair = async (req, res) => {
         .status(409)
         .json({ error: "A fair with this name already exists!" })
     } else {
-
-      if (calculateHallsStands(halls) < calculateStandsLimit(exhibitorRoles)) {
+      if (calculateHallsStands(halls) > calculateStandsLimit(exhibitorRoles)) {
         fair = await Fair.create({
           name,
           address,
@@ -116,9 +115,11 @@ const createFair = async (req, res) => {
 
         return res.status(201).json(fair)
       } else {
-      return  res.send(
-          "Stands limit shouldn't exceed the total available stands for this fair!"
-        )
+        return res
+          .status(400)
+          .send(
+            "Stands limit shouldn't exceed the total available stands for this fair!"
+          )
       }
     }
   } catch (error) {
@@ -176,8 +177,11 @@ const updateFair = async (req, res) => {
 //tested
 const cancelFair = async (req, res) => {
   try {
+    console.log("here")
     const { id } = req.params
+    console.log(id)
     const fair = await Fair.findById(id)
+    console.log("here")
 
     if (fair) {
       if (fair.mainManager != res.locals.payload.id) {
@@ -186,6 +190,7 @@ const cancelFair = async (req, res) => {
         })
       }
       if (fair.status != "openForBooking") {
+        console.log("reached if")
         const cancelFair = await Fair.findByIdAndUpdate(id, {
           status: "canceled",
         })
@@ -197,6 +202,7 @@ const cancelFair = async (req, res) => {
         })
       }
     } else {
+      console.log("Iam in this else")
       return res.status(404).json({ error: "Fair not found!" })
     }
   } catch (error) {
