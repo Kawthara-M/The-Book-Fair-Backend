@@ -1,13 +1,14 @@
 const Fair = require("../models/Fair")
 const Hall = require("../models/Hall")
 
-// tested
 const getFairs = async (req, res) => {
   try {
     const fairs = await Fair.find().populate("mainManager")
     res.send(fairs)
   } catch (error) {
-    console.error("Failed to fetch fairs!", error.message)
+    return res.status(500).json({
+      error: "Failure encountred while fetching fairs.",
+    })
   }
 }
 
@@ -17,16 +18,21 @@ const getFairById = async (req, res) => {
     const { id } = req.params
     const fair = await Fair.findOne({ _id: id }).populate("mainManager")
 
-    if (fair) {
-      res.send(fair)
-    } else {
-      res.send("no such fair found!")
+    if (!fair) {
+      return res.status(404).json({ error: "No such fair found." })
     }
+
+    return res.status(200).json({ fair })
   } catch (error) {
-    console.log(error)
+    return res.status(500).json({
+      error: "Failure encountred while fetching this fair.",
+    })
   }
 }
 
+// The following functions are used by createFair controller,
+
+// A function to ensure that the tickets date is within the active dates of the fair
 const isTicketDateRangeValid = (fairStartDate, fairEndDate, tickets) => {
   const minDate = new Date(fairStartDate)
   const maxDate = new Date(fairEndDate)
@@ -38,6 +44,7 @@ const isTicketDateRangeValid = (fairStartDate, fairEndDate, tickets) => {
   })
 }
 
+// A function to calculate the total available stands across halls, and ultimately used to ensure the stand limit of each exhibitor role doesn't exceed this total.
 const calculateHallsStands = (halls) => {
   let totalStandsAvailability = 0
   halls.forEach((hall) => {
@@ -127,7 +134,6 @@ const createFair = async (req, res) => {
   }
 }
 
-// should be tested
 const updateFair = async (req, res) => {
   try {
     const { id } = req.params
@@ -169,19 +175,14 @@ const updateFair = async (req, res) => {
 
     return res.status(200).json(fair)
   } catch (error) {
-    console.error(error)
     return res.status(500).json({ error: "Failed to update fair" })
   }
 }
 
-//tested
 const cancelFair = async (req, res) => {
   try {
-    console.log("here")
     const { id } = req.params
-    console.log(id)
     const fair = await Fair.findById(id)
-    console.log("here")
 
     if (fair) {
       if (fair.mainManager != res.locals.payload.id) {
@@ -190,7 +191,6 @@ const cancelFair = async (req, res) => {
         })
       }
       if (fair.status != "openForBooking") {
-        console.log("reached if")
         const cancelFair = await Fair.findByIdAndUpdate(id, {
           status: "canceled",
         })
@@ -202,16 +202,13 @@ const cancelFair = async (req, res) => {
         })
       }
     } else {
-      console.log("Iam in this else")
       return res.status(404).json({ error: "Fair not found!" })
     }
   } catch (error) {
-    console.error(error)
     return res.status(500).json({ error: "Failed to cancel fair." })
   }
 }
 
-// tested!
 const updateStatus = async (req, res) => {
   try {
     const { id } = req.params
@@ -226,6 +223,7 @@ const updateStatus = async (req, res) => {
       }
 
       const index = stages.findIndex((stage) => stage === fair.status)
+
       if (index >= 0 && index < stages.length - 1) {
         fair.status = stages[index + 1]
         await fair.save()
@@ -241,7 +239,6 @@ const updateStatus = async (req, res) => {
       return res.status(404).json({ error: "Fair not found!" })
     }
   } catch (error) {
-    console.error(error)
     return res.status(500).json({ error: "Failed to update fair status." })
   }
 }
@@ -250,6 +247,7 @@ const deleteFair = async (req, res) => {
   try {
     const { id } = req.params
     const fair = await Fair.findById(id)
+
     if (fair) {
       if (fair.mainManager != res.locals.payload.id) {
         res.status(403).send({
@@ -269,7 +267,6 @@ const deleteFair = async (req, res) => {
       return res.status(404).json({ error: "Fair not found!" })
     }
   } catch (error) {
-    console.error(error)
     return res.status(500).json({ error: "Failed to delete fair." })
   }
 }
@@ -280,7 +277,6 @@ const getHallsForFair = async (req, res) => {
     const halls = await Hall.find({ fair: id })
     res.status(200).json(halls)
   } catch (error) {
-    console.error("Failed to fetch halls for fair", error)
     res.status(500).json({ error: "Could not fetch halls" })
   }
 }

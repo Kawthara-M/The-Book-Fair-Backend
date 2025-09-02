@@ -49,6 +49,7 @@ const updateTicket = async (req, res) => {
     const { newType } = req.body
 
     let ticket = await Ticket.findById(ticketId).populate("fair")
+
     if (ticket && ticket.status == "unpaid") {
       const fair = ticket.fair
       let fairTickets = fair.tickets
@@ -95,10 +96,6 @@ const updateTicket = async (req, res) => {
         msg: "You are not authorized to update a ticket that has been paid!",
       })
     }
-
-    // if (fair.tickets[ticketIndex].availability <= 0) {
-    //   return res.status(400).json({ error: "No tickets available!" })
-    // }
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: "Failed to update ticket!" })
@@ -140,7 +137,6 @@ const updateStatus = async (req, res) => {
   }
 }
 
-// tested!
 const deleteTicket = async (req, res) => {
   try {
     const { ticketId } = req.params
@@ -167,42 +163,29 @@ const deleteTicket = async (req, res) => {
   }
 }
 
-//tested!
 const getTicketsByUser = async (req, res) => {
   try {
     const userId = res.locals.payload.id
     const tickets = await Ticket.find({ user: userId }).populate("fair")
 
-    if (tickets) {
-      res.send(tickets)
+    if (!tickets) {
+      return res
+        .status(404)
+        .json({ message: "No tickets found for this user." })
     }
+
+    return res.status(200).json({ tickets })
   } catch (error) {
     console.error(error)
     res.status(500).send("Failed to get Tickets!")
   }
 }
 
-// why do we even need this? tickets info can be extracted from fair
-const getTicketsByFair = async (req, res) => {
-  try {
-    const fair = await Fair.findById(req.params.fairId)
-
-    if (fair.tickets.length > 0) {
-      res.send(fair.tickets)
-    } else {
-      res.status(404).send("No tickets found for this fair!")
-    }
-  } catch (error) {
-    console.error(error)
-    res.status(500).send("Failed to get Tickets!")
-  }
-}
 
 module.exports = {
   createTicket,
   updateTicket,
   deleteTicket,
   getTicketsByUser,
-  getTicketsByFair,
   updateStatus,
 }

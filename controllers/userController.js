@@ -1,7 +1,6 @@
 const User = require("../models/User")
 const Exhibitor = require("../models/Exhibitor")
 
-// tested
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(res.locals.payload.id)
@@ -17,7 +16,9 @@ const getUserProfile = async (req, res) => {
       exhibitor: exhibitor || "",
     })
   } catch (error) {
-    throw error
+    return res.status(500).json({
+      error: "Failure encountred while fetching user profile."
+    })
   }
 }
 
@@ -81,7 +82,9 @@ const updateUserProfile = async (req, res) => {
       exhibitor: updatedExhibitor,
     })
   } catch (error) {
-    throw error
+      return res.status(500).json({
+      error: "Failure encountred while updating user profile."
+    })
   }
 }
 

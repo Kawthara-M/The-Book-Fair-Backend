@@ -4,7 +4,6 @@ const fs = require("fs")
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Use `req.uploadFolder` if set by route/controller
     const targetFolder = req.uploadFolder || "portfolio"
 
     const uploadDir = path.join(

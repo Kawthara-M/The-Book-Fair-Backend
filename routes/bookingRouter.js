@@ -9,7 +9,7 @@ router.post(
   middleware.isExhibitor,
   bookingCtrl.createBooking
 )
-// get all bookings, but admin would be able to see all bookings even if they not manager, not right
+
 router.get(
   "/exhibitor-bookings",
   middleware.stripToken,
@@ -24,12 +24,6 @@ router.get(
   middleware.verifyToken,
   middleware.isAdmin,
   bookingCtrl.getBookingsByFair
-)
-router.get(
-  "/:bookingId/stands",
-  middleware.stripToken,
-  middleware.verifyToken,
-  bookingCtrl.getBookingStands
 )
 
 router.put(

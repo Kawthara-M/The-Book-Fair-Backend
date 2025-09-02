@@ -43,7 +43,7 @@ const verifyToken = (req, res, next) => {
       return next()
     }
 
-   res.status(401).send({ status: "Error", msg: "Unauthorized" })
+    res.status(401).send({ status: "Error", msg: "Unauthorized" })
   } catch (error) {
     console.log(error)
     res.status(401).send({ status: "Error", msg: "Verify Token Error!" })
@@ -83,5 +83,5 @@ module.exports = {
   verifyToken,
   isAdmin,
   isAttendee,
-  isExhibitor
+  isExhibitor,
 }

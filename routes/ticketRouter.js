@@ -17,15 +17,6 @@ router.get(
   ticketCtrl.getTicketsByUser
 )
 
-// might be deleted
-router.get(
-  "/:fairId",
-  middleware.stripToken,
-  middleware.verifyToken,
-  ticketCtrl.getTicketsByFair
-)
-
-
 router.put(
   "/:ticketId",
   middleware.stripToken,
@@ -41,7 +32,7 @@ router.put(
   ticketCtrl.updateStatus
 )
 
-// should user be able to delete the ticket? they would need to refund them,
+// no refund
 router.delete(
   "/:ticketId",
   middleware.stripToken,

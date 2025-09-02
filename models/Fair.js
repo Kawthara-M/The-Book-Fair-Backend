@@ -3,15 +3,16 @@ const Schema = mongoose.Schema
 
 const FairSchema = new Schema(
   {
+    name: {
+      type: String,
+      required: true,
+    },
     mainManager: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    name: {
-      type: String,
-      required: true,
-    },
+
     address: {
       type: String,
       required: true,
@@ -69,6 +70,12 @@ const FairSchema = new Schema(
       },
     ],
     image: {
+      type: String,
+    },
+    startDate: {
+      type: String,
+    },
+    endDate: {
       type: String,
     },
   },

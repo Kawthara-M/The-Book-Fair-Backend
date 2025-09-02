@@ -7,6 +7,7 @@ const Booking = require("../models/Booking")
 const createBooking = async (req, res) => {
   try {
     const fair = await Fair.findById(req.params.fairId)
+
     if (!fair) {
       return res.status(404).send("Fair not found!")
     }
@@ -14,11 +15,12 @@ const createBooking = async (req, res) => {
     const { exhibitorRole, stands } = req.body
     const userId = res.locals.payload.id
     const exhibitor = await Exhibitor.findOne({ user: userId }).populate("user")
+
     if (!exhibitor) {
       return res.status(404).json({ error: "Exhibitor not found!" })
     }
-    const exhibitorId = exhibitor._id
 
+    const exhibitorId = exhibitor._id
     const roleIndex = fair.exhibitorRoles.findIndex(
       (role) => role.name === exhibitorRole
     )
@@ -43,7 +45,7 @@ const createBooking = async (req, res) => {
 
     for (const standRequest of stands) {
       const requestedType = standRequest.requestedType
-      const requestedCount = parseInt(standRequest.requestedCount) || 0
+      const requestedCount = parseInt(standRequest.requestedCount) || 1
       let remaining = requestedCount
 
       for (const hall of halls) {
@@ -109,7 +111,6 @@ const createBooking = async (req, res) => {
   }
 }
 
-//tested
 const getBookingsByFair = async (req, res) => {
   try {
     const adminId = res.locals.payload.id
@@ -119,10 +120,12 @@ const getBookingsByFair = async (req, res) => {
     })
 
     if (fair) {
-      const bookings = await Booking.find({ fair: fair }).populate({
-        path: "exhibitor",
-        populate: { path: "user" }, 
-      }).populate("stands")
+      const bookings = await Booking.find({ fair: fair })
+        .populate({
+          path: "exhibitor",
+          populate: { path: "user" },
+        })
+        .populate("stands")
 
       if (bookings) {
         res.send(bookings)
@@ -140,7 +143,6 @@ const getBookingsByFair = async (req, res) => {
   }
 }
 
-// tested
 const getBookingsByUser = async (req, res) => {
   try {
     const userId = res.locals.payload.id
@@ -171,7 +173,6 @@ const getBookingsByUser = async (req, res) => {
   }
 }
 
-//tested
 const updateBooking = async (req, res) => {
   try {
     const userId = res.locals.payload.id
@@ -285,7 +286,7 @@ const updateBooking = async (req, res) => {
   }
 }
 
-//tested
+
 const updateStatus = async (req, res) => {
   try {
     const { bookingId } = req.params
@@ -343,7 +344,6 @@ const updateStatus = async (req, res) => {
   }
 }
 
-//tested
 const deleteBooking = async (req, res) => {
   try {
     const { bookingId } = req.params
@@ -393,16 +393,22 @@ const deleteBooking = async (req, res) => {
 getBookingStands = async (req, res) => {
   try {
     const stands = await Booking.findById(req.params.id).populate({
-      path: "stands", // populate stands array
+      path: "stands",
       populate: {
-        path: "hall", // for each stand, populate hall
-        model: "Hall", // optional if not inferred
+        path: "hall",
+        model: "Hall",
       },
     })
-    if (stands) {
-      return res.status(200).json({ stands })
+
+    if (!stands) {
+      return res.status(404).json({ error: "Booking not found." })
     }
-  } catch (error) {}
+    return res.status(200).json({ stands })
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failure encountred while fetching stands for booking",
+    })
+  }
 }
 
 module.exports = {
@@ -412,5 +418,4 @@ module.exports = {
   updateBooking,
   updateStatus,
   deleteBooking,
-  getBookingStands,
 }

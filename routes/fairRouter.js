@@ -16,10 +16,6 @@ router.get("/:id", fairController.getFairById)
 // only admin can create, update, and delete fairs
 router.post(
   "/",
-  (req, res, next) => {
-    req.uploadFolder = "fair-images" 
-    next()
-  },
   middleware.stripToken,
   middleware.verifyToken,
   middleware.isAdmin,

@@ -17,10 +17,6 @@ const ExhibitorSchema = new Schema(
       type: String,
       default: "",
     },
-    category: {
-      type: String,
-      default: "", //let's delete this one later
-    },
     portfolio: {
       type: String,
       default: "",
