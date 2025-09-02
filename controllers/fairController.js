@@ -48,8 +48,9 @@ const isTicketDateRangeValid = (fairStartDate, fairEndDate, tickets) => {
 const calculateHallsStands = (halls) => {
   let totalStandsAvailability = 0
   halls.forEach((hall) => {
+    console.log(hall)
     hall.stands.forEach((stand) => {
-      totalStandsAvailability += stand.availability || 0
+      totalStandsAvailability += parseInt(stand.availability)
     })
   })
   return totalStandsAvailability
@@ -57,7 +58,7 @@ const calculateHallsStands = (halls) => {
 const calculateStandsLimit = (roles) => {
   let totalStandsLimit = 0
   roles.forEach((role) => {
-    totalStandsLimit += role.standsLimit || 0
+    totalStandsLimit += parseInt(role.standsLimit)
   })
 
   return totalStandsLimit
@@ -99,7 +100,7 @@ const createFair = async (req, res) => {
         .status(409)
         .json({ error: "A fair with this name already exists!" })
     } else {
-      if (calculateHallsStands(halls) > calculateStandsLimit(exhibitorRoles)) {
+      if (calculateHallsStands(halls) >= calculateStandsLimit(exhibitorRoles)) {
         fair = await Fair.create({
           name,
           address,
