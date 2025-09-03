@@ -20,6 +20,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 )
+app.options("*", cors());
 const morgan = require("morgan")
 
 // use MiddleWares
