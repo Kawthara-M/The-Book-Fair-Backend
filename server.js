@@ -14,10 +14,12 @@ const mongoose = require("./config/db")
 const port = process.env.PORT ? process.env.PORT : 3000
 
 // Require MiddleWares
-app.use(cors()) /*  {
+app.use(
+  cors({
     origin: "https://the-book-fair.surge.sh",
     methods: ["GET", "POST", "PUT", "DELETE"],
-  } */
+  })
+)
 const morgan = require("morgan")
 
 // use MiddleWares

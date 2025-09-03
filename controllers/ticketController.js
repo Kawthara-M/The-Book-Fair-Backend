@@ -124,6 +124,7 @@ const updateStatus = async (req, res) => {
           .status(200)
           .json({ msg: "Ticket status updated successfully.", ticket })
       } else {
+        console.log("here")
         res.status(403).send({
           msg: "You are not authorized to update a ticket in this status!",
         })
@@ -180,7 +181,6 @@ const getTicketsByUser = async (req, res) => {
     res.status(500).send("Failed to get Tickets!")
   }
 }
-
 
 module.exports = {
   createTicket,
